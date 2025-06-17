@@ -1,84 +1,103 @@
 import { useState, useEffect } from 'react';
-import axios, { AxiosError } from 'axios';
-
-interface FetchedData {
-  msg: number;
-  data: string[];
-}
-
-interface ErrorResponse {
-  message: string;
-}
 
 const Index = () => {
-  const [fetchedData, setFetchedData] = useState<FetchedData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [mortgageAmount, setMortgageAmount] = useState(100000);
+  const [downPayment, setDownPayment] = useState(80000);
+  const [apr, setApr] = useState(4.52);
+  const [years, setYears] = useState(25);
 
-  const fetchUser = async () => {
-    try {
-      // Replace with your backend API endpoint
-      const response = await axios.get<FetchedData>(
-        'https://backendfunctions.up.railway.app/'
-      );
-      setFetchedData(response.data);
-      setLoading(false);
-    } catch (err) {
-      const axiosError = err as AxiosError<ErrorResponse>;
-      setError(
-        axiosError.response?.data?.message || 'Failed to fetch user data'
-      );
-      setLoading(false);
-    }
-  };
+  const [payment, setPayment] = useState(0);
+  const [totalPayment, setTotalPayment] = useState(0);
+  const [totalInterest, setTotalInterest] = useState(0);
+
+  const loanAmount = mortgageAmount - downPayment
+
+  function calculate() {
+    const qtyOfPayments = years * 12;
+    const payment =
+      (loanAmount *
+        ((apr / 100 / 12) * Math.pow(1 + apr / 100 / 12, qtyOfPayments))) /
+      (Math.pow(1 + apr / 100 / 12, qtyOfPayments) - 1);
+    const totalPayments = payment * 12 * years;
+  
+    const totalInterest = totalPayments - loanAmount;
+
+    setPayment(Number(payment.toFixed(2)));
+    setTotalPayment(Number(totalPayments.toFixed(2)));
+    setTotalInterest(Number(totalInterest.toFixed(2)));
+  }
 
   useEffect(() => {
-    fetchUser();
-  }, []);
-
-  // Render error state
+    setPayment(0);
+    setTotalPayment(0);
+    setTotalInterest(0);
+  }, [mortgageAmount, loanAmount, apr, years]);
 
   return (
-    <div className="p-10 flex flex-col gap-10">
-      <h1 className="font-bold text-blue-500 text-3xl">Happy Coding!</h1>
-      <div className="bg-amber-300 rounded-md p-8 flex flex-col gap-3">
-        <h3 className="font-bold  text-slate-700 text-2xl">Moar Headline!</h3>
-        <p className="">
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Accusantium,
-          necessitatibus. Eius esse dolorem placeat? Fugit dicta eaque quam
-          pariatur tempore ipsam optio nobis consectetur quod commodi, sit illum
-          ab illo rem, debitis architecto quas? Unde dignissimos esse pariatur
-          quia animi.
-        </p>
+    <div className="w-full min-h-screen p-10 bg-slate-800 flex flex-row justify-center">
+      <div className="w-fit">
+        <div className="flex flex-col gap-6 bg-slate-500/30 p-10 rounded-lg w-fit">
+          <h1 className="text-amber-300 font-bold text-3xl">Inputs</h1>
+          <label className=" text-slate-50 w-full flex flex-row justify-between">
+            Mortgage Amount
+            <input
+              type="number"
+              pattern="[0-9]+"
+              value={mortgageAmount}
+              className="bg-slate-50 ml-4 px-3 py-1 rounded-md text-slate-900"
+              onChange={(e) => setMortgageAmount(Number(e.target.value))}
+            />
+          </label>
+          <label className="text-slate-50 w-full flex flex-row justify-between">
+            Downpayment
+            <input
+              type="number"
+              pattern="[0-9]+"
+              value={downPayment}
+              className="bg-slate-50 ml-4 px-3 py-1 rounded-md text-slate-900"
+              onChange={(e) => setDownPayment(Number(e.target.value))}
+            />
+          </label>
+          <label className="text-slate-50 w-full flex flex-row justify-between">
+            Annual Percentage Rate
+            <input
+              type="number"
+              pattern="[0-9]+"
+              value={apr}
+              className="bg-slate-50 ml-4 px-3 py-1 rounded-md text-slate-900"
+              onChange={(e) => setApr(Number(e.target.value))}
+            />
+          </label>
+          <label className="text-slate-50 w-full flex flex-row justify-between">
+            Term Length (years)
+            <input
+              type="number"
+              pattern="[0-9]+"
+              value={years}
+              className="bg-slate-50 ml-4 px-3 py-1 rounded-md text-slate-900"
+              onChange={(e) => setYears(Number(e.target.value))}
+            />
+          </label>
+          <button className="bg-blue-300 rounded-md py-2" onClick={calculate}>
+            Calculate
+          </button>
+        </div>
 
-        {error ? (
-          <div className="flex justify-center items-center">
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-              <p>{error}</p>
-            </div>
-          </div>
-        ) : (
-          <div className="max-w-lg mx-auto mt-10 p-6 bg-white rounded-lg shadow-xl">
-            <h1 className="text-2xl font-bold text-gray-800 mb-4">
-              Some Text from BackendFunctions
-            </h1>
-            <div className="space-y-2">
-              <p className="text-gray-600">
-                {loading ? 'Loading...' : fetchedData?.msg}
-              </p>
-              <ul className="list-disc list-inside space-y-2 text-gray-700">
-                {fetchedData?.data?.map((line) => {
-                  return (
-                    <li className="flex items-start">
-                      <span className="min-w-2 min-h-2 w-2 h-2 mt-2 mr-2 bg-blue-500 rounded-full"></span>
-                      {line}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          </div>
-        )}
+        <div className="flex flex-col gap-4 bg-slate-500/30 p-10 rounded-lg w-full mt-10">
+          <h2 className="text-amber-300 font-bold text-3xl">Outputs</h2>
+          <p className="text-slate-50 font-semibold text-xl flex flex-row justify-between">
+            <span>Monthly Mortgage Payment:</span>{' '}
+            {payment > 0 && `$${payment}`}
+          </p>
+          <p className="text-slate-50 font-semibold text-xl flex flex-row justify-between">
+            <span>Total Payment Amount:</span>{' '}
+            {totalPayment > 0 && `$${totalPayment}`}
+          </p>
+          <p className="text-slate-50 font-semibold text-xl flex flex-row justify-between">
+            <span>Total Interest Paid:</span>{' '}
+            {totalInterest > 0 && `$${totalInterest}`}
+          </p>
+        </div>
       </div>
     </div>
   );
